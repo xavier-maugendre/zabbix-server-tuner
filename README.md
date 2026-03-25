@@ -48,7 +48,7 @@ Aucune installation requise. Ouvrir directement dans le navigateur :
 
 ```bash
 # Cloner le repo
-git clone https://github.com/Bisuuuu/zabbixtune.git
+git clone https://github.com/xavier-maugendre/zabbixtune.git
 cd zabbixtune
 
 # Ouvrir dans le navigateur
@@ -101,4 +101,4 @@ zabbixtune/
 
 ## 🔗 Projets liés
 
-- [ansible-zabbix-deploy](https://github.com/Bisuuuu/ansible-zabbix-deploy) — Déploiement automatisé Zabbix 7.x via Ansible (AlmaLinux 9)
+- [ansible-zabbix-deploy](https://github.com/xavier-maugendre/ansible-zabbix-deploy) — Déploiement automatisé Zabbix 7.x via Ansible (AlmaLinux 9)
