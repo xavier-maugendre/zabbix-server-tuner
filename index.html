@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZabbixTune — Zabbix Server Config Simulator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+:root {
+  --bg:#161b22; --s1:#1c2330; --s2:#212936; --s3:#262e3d;
+  --b1:#2d3748; --b2:#3a4a63;
+  --orange:#e8622a; --odim:#3d1f0f;
+  --green:#3dba74;  --gdim:#0f2b1a;
+  --yellow:#e6b84a; --ydim:#2a2007;
+  --red:#e05252;    --rdim:#2a0f0f;
+  --blue:#5ba3f5;   --bdim:#0f1f3a;
+  --purple:#a78bfa; --pdim:#1a1428;
+  --cyan:#38bdf8;   --cdim:#0c2233;
+  --text:#e2e8f2; --text2:#8b98b0; --text3:#4e5a70;
+  --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.5;}
+.wrap{max-width:1440px;margin:0 auto;padding:18px 24px 40px;}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding-bottom:14px;border-bottom:1px solid var(--b1);margin-bottom:16px;}
+.logo{display:flex;align-items:baseline;gap:12px;}
+.logo-name{font-family:var(--mono);font-size:21px;font-weight:600;letter-spacing:-.5px;}
+.logo-name em{color:var(--orange);font-style:normal;}
+.logo-sub{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:1.5px;text-transform:uppercase;}
+.badges{display:flex;gap:6px;}
+.badge{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px;border:1px solid;letter-spacing:.5px;}
+.bv  {color:var(--green); border-color:rgba(61,186,116,.3); background:var(--gdim);}
+
+/* DB BAR */
+.db-bar{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--s1);border:1px solid var(--b1);border-radius:6px;margin-bottom:14px;flex-wrap:wrap;}
+.db-bar-lbl{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);white-space:nowrap;}
+.dbtn{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:4px;border:1px solid var(--b1);background:var(--s2);cursor:pointer;transition:all .12s;font-size:12px;font-weight:500;color:var(--text2);}
+.dbtn:hover{border-color:var(--b2);color:var(--text);}
+.dbtn.active{background:var(--odim);border-color:var(--orange);color:var(--orange);}
+.dbtn .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.db-info{margin-left:auto;font-size:10px;color:var(--text3);font-style:italic;}
+.db-info span{color:var(--yellow);font-style:normal;}
+
+/* PROXY BANNER */
+.proxy-banner{display:none;margin-bottom:14px;background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;}
+.proxy-banner.visible{display:block;}
+.pb-hdr{display:flex;align-items:center;padding:9px 14px;border-bottom:1px solid var(--b1);background:var(--s2);}
+.pb-ttl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);}
+.pb-body{display:grid;grid-template-columns:1fr 1fr;}
+.pb-col{padding:13px 16px;}
+.pb-col+.pb-col{border-left:1px solid var(--b1);}
+.pb-ctitle{font-size:11px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:7px;}
+.pbtag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px;font-family:var(--mono);}
+.pb-row{display:flex;gap:6px;margin-bottom:5px;font-size:11.5px;line-height:1.5;}
+.pb-ico{flex-shrink:0;width:14px;text-align:center;margin-top:1px;}
+.pb-txt{color:var(--text2);}
+.pb-txt strong{color:var(--text);}
+.pb-txt code{font-family:var(--mono);font-size:10px;color:var(--blue);background:var(--bdim);padding:1px 5px;border-radius:3px;}
+.pb-rec{font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-top:10px;padding:6px 10px;border-radius:4px;}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:540px 1fr;gap:14px;align-items:start;}
+
+/* CARD */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:6px;}
+.card+.card{margin-top:12px;}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 15px;border-bottom:1px solid var(--b1);background:var(--s2);border-radius:6px 6px 0 0;}
+.card-ttl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);}
+.card-body{padding:15px;}
+
+/* ARCH VIEW */
+.arch-view{background:var(--s2);border:1px solid var(--b1);border-radius:5px;padding:11px 12px;margin-bottom:13px;}
+.arch-lbl{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:9px;}
+.arch-grid{display:grid;gap:8px;}
+.arch-grid.no-proxy{grid-template-columns:1fr;}
+.arch-grid.with-proxy{grid-template-columns:1fr 18px repeat(var(--pc,2),1fr);}
+.anode{border:1px solid var(--b1);border-radius:5px;padding:9px 12px;}
+.anode-lbl{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.anode-nvps{font-family:var(--mono);font-size:17px;font-weight:600;line-height:1;}
+.anode-unit{font-size:9px;color:var(--text3);}
+.anode-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+.anode-sub strong{font-weight:600;}
+.node-b{background:var(--bdim);border-color:rgba(91,163,245,.3);}
+.node-b .anode-lbl{color:var(--blue);}
+.node-b .anode-nvps{color:var(--blue);}
+.node-p{background:var(--cdim);border-color:rgba(56,189,248,.3);}
+.node-p .anode-lbl{color:var(--cyan);}
+.node-p .anode-nvps{color:var(--cyan);}
+.arch-arr{display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:14px;}
+
+/* PROFILE */
+.profile-row{display:flex;gap:5px;margin-bottom:12px;}
+.pbtn{flex:1;padding:7px 5px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;cursor:pointer;text-align:center;transition:all .12s;}
+.pbtn:hover{border-color:var(--b2);}
+.pbtn.active{background:var(--odim);border-color:var(--orange);}
+.pbtn .pn{display:block;font-weight:700;font-size:12px;color:var(--text);margin-bottom:2px;}
+.pbtn .ph{display:block;font-size:10px;color:var(--text3);}
+.pbtn.active .pn{color:var(--orange);}
+
+/* SEC */
+.sec{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin:13px 0 7px;padding-bottom:5px;border-bottom:1px solid var(--b1);}
+
+/* SLIDERS */
+.srow{display:grid;grid-template-columns:170px 1fr 68px;align-items:center;gap:10px;margin-bottom:8px;}
+.slbl{font-size:12px;color:var(--text);font-weight:500;}
+.slbl-s{font-family:var(--mono);font-size:9.5px;color:var(--blue);display:block;margin-top:1px;opacity:.8;}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--b1);border-radius:2px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--orange);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 0 1px var(--orange);transition:box-shadow .1s;}
+input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 0 4px rgba(232,98,42,.2);}
+.sval{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);text-align:center;background:var(--s2);border:1px solid var(--b1);border-radius:4px;padding:3px 5px;}
+
+/* PROXY PANEL */
+.proxy-inputs{display:none;margin-top:8px;padding:10px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;}
+.proxy-inputs.visible{display:block;}
+.proxy-mode-row{display:flex;gap:6px;margin-bottom:10px;}
+.pmBtn{flex:1;padding:6px;text-align:center;border-radius:4px;border:1px solid var(--b1);background:var(--bg);cursor:pointer;font-size:11px;font-weight:600;color:var(--text2);transition:all .12s;}
+.pmBtn:hover{border-color:var(--b2);}
+.pmBtn.act-a{background:var(--gdim);border-color:var(--green);color:var(--green);}
+.pmBtn.act-p{background:var(--ydim);border-color:var(--yellow);color:var(--yellow);}
+.proxy-note{font-size:10px;color:var(--text3);margin-top:4px;padding:6px 8px;background:var(--bg);border-radius:4px;line-height:1.6;}
+.proxy-note strong{color:var(--text2);}
+
+/* TOGGLES */
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.trow{display:flex;align-items:center;justify-content:space-between;padding:6px 9px;background:var(--s2);border:1px solid var(--b1);border-radius:4px;gap:8px;}
+.tlbl{font-size:11px;font-weight:500;color:var(--text);}
+.tlbl-s{font-family:var(--mono);font-size:9px;color:var(--text3);display:block;margin-top:1px;}
+.tog{width:30px;height:16px;background:var(--b2);border-radius:8px;cursor:pointer;position:relative;flex-shrink:0;transition:background .18s;}
+.tog.on{background:var(--orange);}
+.tog::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .18s;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+.tog.on::after{transform:translateX(14px);}
+
+/* RIGHT */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.sbox{background:var(--s2);border:1px solid var(--b1);border-radius:5px;padding:10px 13px;}
+.sbox-l{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);margin-bottom:4px;}
+.sbox-v{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--text);line-height:1.1;}
+.sbox-u{font-size:11px;font-weight:400;color:var(--text3);}
+
+.hrow{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.hname{font-family:var(--mono);font-size:11px;color:var(--text2);width:158px;flex-shrink:0;font-weight:500;}
+.htrack{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden;}
+.hfill{height:100%;border-radius:3px;transition:width .35s ease,background-color .35s;}
+.hpct{font-family:var(--mono);font-size:11px;font-weight:600;width:34px;text-align:right;}
+
+.alerts{display:flex;flex-direction:column;gap:5px;margin:10px 0;}
+.alert{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:4px;border-left:3px solid;font-size:11.5px;line-height:1.5;font-weight:500;}
+.a-ok   {background:var(--gdim);border-color:var(--green); color:var(--green);}
+.a-warn {background:var(--ydim);border-color:var(--yellow);color:var(--yellow);}
+.a-crit {background:var(--rdim);border-color:var(--red);   color:var(--red);}
+.a-info {background:var(--bdim);border-color:var(--blue);  color:var(--blue);}
+.a-proxy{background:var(--cdim);border-color:var(--cyan);  color:var(--cyan);}
+.ai{font-size:12px;flex-shrink:0;margin-top:1px;}
+
+/* CONFIG */
+.cfg-wrap{background:var(--s1);border:1px solid var(--b1);border-radius:6px;overflow:hidden;}
+.cfg-toolbar{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--s2);border-bottom:1px solid var(--b1);}
+.cfg-fname{font-family:var(--mono);font-size:11px;color:var(--text2);font-weight:500;display:flex;align-items:center;gap:8px;}
+.cfg-fname strong{color:var(--text);}
+.cfg-pill{font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;font-family:var(--mono);}
+.cfg-note{font-size:10px;color:var(--text3);}
+.copy-btn{background:var(--s1);border:1px solid var(--b2);color:var(--text2);padding:4px 12px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;border-radius:4px;transition:all .12s;}
+.copy-btn:hover{border-color:var(--orange);color:var(--orange);background:var(--odim);}
+.cfg-pre{padding:14px 16px;font-family:var(--mono);font-size:11.5px;line-height:1.85;overflow-y:auto;max-height:680px;white-space:pre;background:#0d1117;color:var(--text);}
+
+/* SYNTAX — reproduces exactly the original file style */
+.co  { color:#3d5272; }          /* # comments */
+.cm  { color:#e8622a; font-weight:700; }  /* modified uncommented value (orange) */
+.cv  { color:#3dba74; }          /* unchanged uncommented value (green) */
+.ck  { color:#5ba3f5; font-weight:500; } /* key name */
+.cd  { color:#1e2d44; }          /* commented-out default (very dark, barely visible) */
+.cs  { color:#4a5a78; font-weight:600; } /* section header comments */
+.cb  { color:#e6b84a; font-weight:600; } /* banner */
+
+footer{margin-top:20px;padding-top:12px;border-top:1px solid var(--b1);font-size:10px;color:var(--text3);text-align:center;}
+footer strong{color:var(--text2);}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="logo">
+    <span class="logo-name">Zabbix<em>Tune</em></span>
+    <span class="logo-sub">Server Config Simulator</span>
+  </div>
+  <div class="badges">
+    <span class="badge bv">7.0 / 7.4</span>
+  </div>
+</header>
+
+<!-- DB -->
+<div class="db-bar">
+  <span class="db-bar-lbl">Base de données :</span>
+  <div class="dbtn active" id="db-mysql"     onclick="setDB('mysql')">    <span class="dot" style="background:#4479A1"></span>MySQL / MariaDB</div>
+  <div class="dbtn"         id="db-pgsql"    onclick="setDB('pgsql')">    <span class="dot" style="background:#336791"></span>PostgreSQL</div>
+  <div class="dbtn"         id="db-timescale" onclick="setDB('timescale')"><span class="dot" style="background:#fdb515"></span>PostgreSQL + TimescaleDB</div>
+  <span class="db-info" id="db-info">MySQL/MariaDB — HousekeepingFrequency actif</span>
+</div>
+
+<!-- PROXY BANNER -->
+<div class="proxy-banner" id="proxy-banner">
+  <div class="pb-hdr"><span class="pb-ttl">Architecture proxy — Actif vs Passif</span></div>
+  <div class="pb-body">
+    <div class="pb-col">
+      <div class="pb-ctitle">
+        <span class="pbtag" style="background:var(--gdim);color:var(--green);border:1px solid rgba(61,186,116,.3)">ProxyMode=0</span>
+        Proxy Actif <span style="color:var(--text3);font-size:10px;font-weight:400">— recommandé prod</span>
+      </div>
+      <div class="pb-row"><span class="pb-ico" style="color:var(--green)">→</span><span class="pb-txt">Le <strong>proxy initie</strong> la connexion vers le serveur (port 10051). Une seule règle firewall <strong>sortante</strong> depuis le site distant.</span></div>
+      <div class="pb-row"><span class="pb-ico" style="color:var(--green)">→</span><span class="pb-txt">Chaque proxy actif consomme <strong>2 trappeurs simultanément</strong> sur le backend : 1 pour les données, 1 pour la sync config.</span></div>
+      <div class="pb-row"><span class="pb-ico" style="color:var(--green)">→</span><span class="pb-txt">Côté serveur : <code>StartTrappers</code> doit être ≥ (nb_proxies × 2) + agents actifs directs.</span></div>
+      <div class="pb-row"><span class="pb-ico" style="color:var(--green)">→</span><span class="pb-txt">Envoi données : <code>DataSenderFrequency=1</code>s. Sync config : <code>ProxyConfigFrequency=10</code>s. Le proxy contrôle les intervalles.</span></div>
+      <div class="pb-rec" style="background:var(--gdim);color:var(--green)">✓ Bonne pratique prod — firewall sortant uniquement</div>
+    </div>
+    <div class="pb-col">
+      <div class="pb-ctitle">
+        <span class="pbtag" style="background:var(--ydim);color:var(--yellow);border:1px solid rgba(230,184,74,.3)">ProxyMode=1</span>
+        Proxy Passif
+      </div>
+      <div class="pb-row"><span class="pb-ico" style="color:var(--yellow)">→</span><span class="pb-txt">Le <strong>serveur initie</strong> la connexion vers le proxy. Nécessite que le port 10051 soit ouvert en <strong>entrée</strong> sur le proxy.</span></div>
+      <div class="pb-row"><span class="pb-ico" style="color:var(--yellow)">→</span><span class="pb-txt">Côté serveur : <code>StartProxyPollers</code> = nb_proxies × 2 (1 poller données + 1 poller config par proxy).</span></div>
+      <div class="pb-row"><span class="pb-ico" style="color:var(--yellow)">→</span><span class="pb-txt">Le serveur contrôle les intervalles via <code>ProxyDataFrequency</code> et <code>ProxyConfigFrequency</code>.</span></div>
+      <div class="pb-row"><span class="pb-ico" style="color:var(--yellow)">→</span><span class="pb-txt">Utile sur réseau <strong>interne maîtrisé</strong> (même DC, VPN managé). Moins adapté aux sites distants.</span></div>
+      <div class="pb-rec" style="background:var(--ydim);color:var(--yellow)">△ Réseau interne uniquement — éviter sur site distant</div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+<!-- LEFT -->
+<div>
+<div class="card">
+  <div class="card-hdr"><span class="card-ttl">Configuration</span></div>
+  <div class="card-body">
+
+    <div class="profile-row">
+      <div class="pbtn" id="p-lab"    onclick="applyProfile('lab')">   <span class="pn">Lab</span>    <span class="ph">≤ 50</span></div>
+      <div class="pbtn" id="p-small"  onclick="applyProfile('small')"> <span class="pn">Small</span>  <span class="ph">50–200</span></div>
+      <div class="pbtn active" id="p-medium" onclick="applyProfile('medium')"><span class="pn">Medium</span><span class="ph">200–1k</span></div>
+      <div class="pbtn" id="p-large"  onclick="applyProfile('large')"> <span class="pn">Large</span>  <span class="ph">1k–5k</span></div>
+      <div class="pbtn" id="p-xlarge" onclick="applyProfile('xlarge')"><span class="pn">XLarge</span> <span class="ph">&gt; 5k</span></div>
+    </div>
+
+    <!-- ARCH VIEW -->
+    <div class="arch-view">
+      <div class="arch-lbl">Répartition de la charge (NVPS)</div>
+      <div class="arch-grid no-proxy" id="arch-grid"></div>
+    </div>
+
+    <div class="sec">Infrastructure totale</div>
+    <div class="srow"><div class="slbl">Hosts total<span class="slbl-s">→ CacheSize + répartition</span></div><input type="range" id="s-hosts" min="10" max="10000" step="10" value="500" oninput="update()"><div class="sval" id="v-hosts">500</div></div>
+    <div class="srow"><div class="slbl">Items / host<span class="slbl-s">→ NVPS</span></div><input type="range" id="s-items" min="10" max="500" step="5" value="80" oninput="update()"><div class="sval" id="v-items">80</div></div>
+    <div class="srow"><div class="slbl">Intervalle moyen<span class="slbl-s">→ NVPS</span></div><input type="range" id="s-interval" min="10" max="300" step="5" value="60" oninput="update()"><div class="sval" id="v-interval">60s</div></div>
+    <div class="srow"><div class="slbl">CPU cores backend<span class="slbl-s">→ StartPreprocessors</span></div><input type="range" id="s-cpu" min="2" max="64" step="2" value="8" oninput="update()"><div class="sval" id="v-cpu">8</div></div>
+    <div class="srow"><div class="slbl">RAM backend<span class="slbl-s">→ sizing caches</span></div><input type="range" id="s-ram" min="4" max="256" step="4" value="16" oninput="update()"><div class="sval" id="v-ram">16 GB</div></div>
+
+    <div class="sec">Proxies</div>
+    <div class="tgrid" style="grid-template-columns:1fr;margin-bottom:8px;">
+      <div class="trow"><div><div class="tlbl">Utiliser des proxies pour la collecte</div><span class="tlbl-s">Bonne pratique prod : déporter la collecte</span></div><div class="tog" id="t-proxy" onclick="tog('proxy')"></div></div>
+    </div>
+    <div class="proxy-inputs" id="proxy-inputs">
+      <div class="proxy-mode-row">
+        <div class="pmBtn act-a" id="pm-actif"  onclick="setProxyMode('actif')" >✓ Proxy Actif (ProxyMode=0)<br><span style="font-size:10px;font-weight:400;opacity:.8">Proxy → Serveur · recommandé</span></div>
+        <div class="pmBtn"       id="pm-passif" onclick="setProxyMode('passif')">Proxy Passif (ProxyMode=1)<br><span style="font-size:10px;font-weight:400;opacity:.8">Serveur → Proxy · réseau interne</span></div>
+      </div>
+      <div class="srow"><div class="slbl">Nb de proxies<span class="slbl-s">→ StartProxyPollers / StartTrappers</span></div><input type="range" id="s-nb-proxies" min="1" max="20" step="1" value="2" oninput="update()"><div class="sval" id="v-nb-proxies">2</div></div>
+      <div class="srow"><div class="slbl">Hosts / proxy<span class="slbl-s">→ NVPS par proxy</span></div><input type="range" id="s-hosts-proxy" min="10" max="5000" step="10" value="200" oninput="update()"><div class="sval" id="v-hosts-proxy">200</div></div>
+      <div class="proxy-note">ℹ Les hosts sur proxies <strong>ne font pas de collecte sur le backend</strong>. Le backend reçoit uniquement les données pré-traitées. Caches et pollers ci-dessous = <strong>serveur central uniquement</strong>.</div>
+    </div>
+
+    <div class="sec">Type de collecte (backend)</div>
+    <div class="tgrid">
+      <div class="trow"><div><div class="tlbl">SNMP polling</div>    <span class="tlbl-s">StartSNMPPollers</span></div>    <div class="tog on" id="t-snmp"        onclick="tog('snmp')"></div></div>
+      <div class="trow"><div><div class="tlbl">ICMP Pinger</div>     <span class="tlbl-s">StartPingers</span></div>         <div class="tog on" id="t-icmp"        onclick="tog('icmp')"></div></div>
+      <div class="trow"><div><div class="tlbl">HTTP Agent / Web</div><span class="tlbl-s">StartHTTPPollers</span></div>     <div class="tog on" id="t-http"        onclick="tog('http')"></div></div>
+      <div class="trow"><div><div class="tlbl">IPMI</div>            <span class="tlbl-s">StartIPMIPollers</span></div>     <div class="tog"    id="t-ipmi"        onclick="tog('ipmi')"></div></div>
+      <div class="trow"><div><div class="tlbl">JMX / Java Gateway</div><span class="tlbl-s">StartJavaPollers</span></div>  <div class="tog"    id="t-jmx"         onclick="tog('jmx')"></div></div>
+      <div class="trow"><div><div class="tlbl">VMware</div>          <span class="tlbl-s">StartVMwareCollectors</span></div><div class="tog"    id="t-vmware"      onclick="tog('vmware')"></div></div>
+      <div class="trow"><div><div class="tlbl">SNMP Trapper</div>    <span class="tlbl-s">StartSNMPTrapper</span></div>    <div class="tog"    id="t-snmptrapper" onclick="tog('snmptrapper')"></div></div>
+    </div>
+
+    <div class="sec">Avancé</div>
+    <div class="srow"><div class="slbl">VMware services<span class="slbl-s">→ StartVMwareCollectors</span></div><input type="range" id="s-vmware" min="0" max="20" step="1" value="0" oninput="update()"><div class="sval" id="v-vmware">0</div></div>
+    <div class="srow"><div class="slbl">Rétention historique<span class="slbl-s">→ disk estimate</span></div><input type="range" id="s-hist" min="7" max="365" step="7" value="30" oninput="update()"><div class="sval" id="v-hist">30j</div></div>
+    <div class="srow"><div class="slbl">Rétention tendances<span class="slbl-s">→ disk estimate</span></div><input type="range" id="s-trend" min="90" max="1825" step="30" value="365" oninput="update()"><div class="sval" id="v-trend">365j</div></div>
+    <div class="srow"><div class="slbl">HANodeName<span class="slbl-s">→ HA cluster node name</span></div>
+      <input type="text" id="s-hanode" placeholder="vide = standalone" oninput="update()" style="font-family:var(--mono);font-size:11px;background:var(--s2);border:1px solid var(--b1);color:var(--text);padding:4px 8px;border-radius:4px;width:100%;outline:none;">
+      <div class="sval" style="font-size:9px;color:var(--text3);background:none;border:none;">opt.</div>
+    </div>
+    <div class="srow"><div class="slbl">NodeAddress<span class="slbl-s">→ IP:port pour le frontend HA</span></div>
+      <input type="text" id="s-nodeaddr" placeholder="ex: 10.10.1.94:10051" oninput="update()" style="font-family:var(--mono);font-size:11px;background:var(--s2);border:1px solid var(--b1);color:var(--text);padding:4px 8px;border-radius:4px;width:100%;outline:none;">
+      <div class="sval" style="font-size:9px;color:var(--text3);background:none;border:none;">opt.</div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- RIGHT -->
+<div>
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-hdr"><span class="card-ttl">Analyse — Serveur Central (Backend)</span></div>
+    <div class="card-body">
+      <div class="sgrid">
+        <div class="sbox"><div class="sbox-l">NVPS ingérés backend</div>    <div class="sbox-v" id="d-nvps">–<span class="sbox-u">/s</span></div></div>
+        <div class="sbox"><div class="sbox-l">RAM caches</div>       <div class="sbox-v" id="d-ram">–</div></div>
+        <div class="sbox"><div class="sbox-l">Disque historique</div><div class="sbox-v" id="d-dh">–<span class="sbox-u"> GB</span></div></div>
+        <div class="sbox"><div class="sbox-l">Disque tendances</div> <div class="sbox-v" id="d-dt">–<span class="sbox-u"> GB</span></div></div>
+      </div>
+      <div class="sec" style="margin-top:4px;">Occupation estimée caches backend</div>
+      <div class="hrow"><div class="hname">CacheSize</div>       <div class="htrack"><div class="hfill" id="h-c"></div></div> <div class="hpct" id="hp-c">–</div></div>
+      <div class="hrow"><div class="hname">HistoryCacheSize</div><div class="htrack"><div class="hfill" id="h-h"></div></div><div class="hpct" id="hp-h">–</div></div>
+      <div class="hrow"><div class="hname">ValueCacheSize</div>  <div class="htrack"><div class="hfill" id="h-v"></div></div><div class="hpct" id="hp-v">–</div></div>
+      <div class="hrow"><div class="hname">DBSyncers load</div>  <div class="htrack"><div class="hfill" id="h-d"></div></div><div class="hpct" id="hp-d">–</div></div>
+      <div class="hrow"><div class="hname">RAM caches / total</div><div class="htrack"><div class="hfill" id="h-r"></div></div><div class="hpct" id="hp-r">–</div></div>
+      <div class="alerts" id="alerts"></div>
+    </div>
+  </div>
+
+  <div class="cfg-wrap">
+    <div class="cfg-toolbar">
+      <div class="cfg-fname">
+        <strong>zabbix_server.conf</strong>
+        <span class="cfg-pill" id="db-pill" style="background:rgba(68,121,161,.2);color:#4479A1;border:1px solid rgba(68,121,161,.3)">MySQL</span>
+        <span class="cfg-note">valeurs modifiées = <span style="color:var(--orange);font-weight:700">orange décommenté</span></span>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="copy-btn" id="btn-copy" onclick="copyConfig()">⎘ Copier</button>
+        <button class="copy-btn" id="btn-dl"   onclick="downloadConfig()" style="color:var(--green);border-color:rgba(61,186,116,.4);">↓ Télécharger .conf</button>
+        <button class="copy-btn" id="btn-diff" onclick="downloadDiff()" style="color:var(--yellow);border-color:rgba(230,184,74,.4);">⎘ Copier variables modifiées</button>
+      </div>
+    </div>
+    <div class="cfg-pre" id="cfg-out"></div>
+  </div>
+</div>
+</div>
+
+<footer>ZabbixTune — Zabbix Server Config Simulator</footer>
+</div>
+
+<script>
+// ── STATE ──
+const T={snmp:true,icmp:true,http:true,ipmi:false,jmx:false,proxy:false,vmware:false,snmptrapper:false};
+let currentDB='mysql', proxyMode='actif';
+
+const DB_INFO={
+  mysql:    'MySQL/MariaDB — HousekeepingFrequency actif, DELETE classiques',
+  pgsql:    'PostgreSQL — partitionnement recommandé à fort volume',
+  timescale:'PostgreSQL + TimescaleDB — partitionnement natif, compression hypertables, Housekeeper actif',
+};
+const DB_PILL={
+  mysql:    {label:'MySQL',               bg:'rgba(68,121,161,.2)', color:'#4479A1',br:'rgba(68,121,161,.3)'},
+  pgsql:    {label:'PostgreSQL',          bg:'rgba(51,103,145,.2)', color:'#5ba3f5',br:'rgba(51,103,145,.3)'},
+  timescale:{label:'PG+TimescaleDB',      bg:'rgba(253,181,21,.15)',color:'#e6b84a',br:'rgba(253,181,21,.3)'},
+};
+
+function setDB(db){
+  currentDB=db;
+  document.querySelectorAll('.dbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('db-'+db).classList.add('active');
+  document.getElementById('db-info').innerHTML=DB_INFO[db];
+  const p=DB_PILL[db];
+  const pill=document.getElementById('db-pill');
+  pill.textContent=p.label;pill.style.background=p.bg;pill.style.color=p.color;pill.style.border=`1px solid ${p.br}`;
+  update();
+}
+function setProxyMode(m){
+  proxyMode=m;
+  document.getElementById('pm-actif').className ='pmBtn'+(m==='actif' ?' act-a':'');
+  document.getElementById('pm-passif').className='pmBtn'+(m==='passif'?' act-p':'');
+  update();
+}
+function tog(k){
+  T[k]=!T[k];
+  document.getElementById('t-'+k).classList.toggle('on',T[k]);
+  if(k==='proxy'){
+    document.getElementById('proxy-inputs').classList.toggle('visible',T[k]);
+    document.getElementById('proxy-banner').classList.toggle('visible',T[k]);
+  }
+  update();
+}
+function v(id){return parseFloat(document.getElementById(id).value)||0;}
+function tx(id){return (document.getElementById(id).value||'').trim();}
+function snapMem(mb){const s=[16,32,64,128,256,512,1024,2048,4096,8192,16384,32768,65536];for(const x of s)if(x>=mb)return x;return s[s.length-1];}
+function memStr(mb){return mb>=1024?(mb/1024)+'G':mb+'M';}
+function hColor(p){return p<50?'#3dba74':p<75?'#e6b84a':'#e05252';}
+function setBar(id,pid,pct){
+  const p=Math.min(100,Math.max(0,pct));
+  document.getElementById(id).style.width=p+'%';
+  document.getElementById(id).style.backgroundColor=hColor(p);
+  document.getElementById(pid).textContent=Math.round(p)+'%';
+  document.getElementById(pid).style.color=hColor(p);
+}
+
+function update(){
+  const hostsTotal=v('s-hosts'), items=v('s-items'), interval=v('s-interval');
+  const cpu=v('s-cpu'), ram=v('s-ram'), vmwC=v('s-vmware');
+  const histD=v('s-hist'), trendD=v('s-trend');
+  const nbProxy=T.proxy?v('s-nb-proxies'):0;
+  const hostsProxy=T.proxy?v('s-hosts-proxy'):0;
+  const haNode=tx('s-hanode'), nodeAddr=tx('s-nodeaddr');
+
+  // UI labels
+  document.getElementById('v-hosts').textContent    = hostsTotal>=1000?(hostsTotal/1000).toFixed(1)+'k':hostsTotal;
+  document.getElementById('v-items').textContent    = items;
+  document.getElementById('v-interval').textContent = interval+'s';
+  document.getElementById('v-cpu').textContent      = cpu;
+  document.getElementById('v-ram').textContent      = ram+' GB';
+  document.getElementById('v-vmware').textContent   = vmwC;
+  document.getElementById('v-hist').textContent     = histD+'j';
+  document.getElementById('v-trend').textContent    = trendD+'j';
+  if(T.proxy){
+    document.getElementById('v-nb-proxies').textContent  = nbProxy;
+    document.getElementById('v-hosts-proxy').textContent = hostsProxy>=1000?(hostsProxy/1000).toFixed(1)+'k':hostsProxy;
+  }
+
+  // NVPS
+  const hostsOnProxy = T.proxy ? Math.min(nbProxy*hostsProxy, hostsTotal) : 0;
+  const hostsBackend = Math.max(0, hostsTotal - hostsOnProxy);
+  const nvpsDirect   = Math.round(hostsBackend*items/interval);
+  const nvpsFromProxy= T.proxy ? Math.round(hostsOnProxy*items/interval) : 0;
+  const nvpsTotal    = nvpsDirect + nvpsFromProxy;
+  const nvpsPerProxy = T.proxy ? Math.round(hostsProxy*items/interval) : 0;
+
+  // Arch view
+  updateArch(hostsBackend,hostsTotal,nvpsDirect,nvpsTotal,nvpsFromProxy,nvpsPerProxy,nbProxy,hostsProxy);
+
+  document.getElementById('d-nvps').innerHTML=nvpsTotal.toLocaleString('fr')+'<span class="sbox-u">/s</span>';
+
+  // CACHES — CacheSize = toute la config (tous hosts même sur proxy)
+  const totalItemsAll = hostsTotal*items;
+  const cacheMB    = snapMem(Math.max(32,  Math.ceil((hostsTotal*75+totalItemsAll*3)/1048576*1.5)));
+  const histCachMB = snapMem(Math.max(64,  Math.min(2048,Math.ceil(nvpsTotal*128*5/1048576))));
+  const histIdxMB  = snapMem(Math.max(16,  Math.ceil(histCachMB/4)));
+  const trendMB    = snapMem(Math.max(32,  Math.min(2048,Math.ceil(totalItemsAll*0.02))));
+  const tfcMB      = snapMem(Math.max(16,  Math.ceil(trendMB/2)));
+  const valueMB    = snapMem(Math.max(64,  Math.min(65536,Math.ceil(nvpsTotal*300*50/1048576))));
+  const totalCachMB= cacheMB+histCachMB+histIdxMB+trendMB+tfcMB+valueMB;
+  document.getElementById('d-ram').textContent=memStr(totalCachMB);
+  const ramPct=Math.round((totalCachMB/(ram*1024*0.7))*100);
+
+  // ── PROCESSUS ──
+  // Distinction claire entre deux usages du NVPS :
+  //
+  //  nvpsDirect  = hosts collectés directement par le backend
+  //              → dimensionne les COLLECTEURS (pollers, pingers, snmp...)
+  //
+  //  nvpsTotal   = nvpsDirect + nvpsFromProxy
+  //              = tout ce que le backend INGÈRE (écrit en BDD, évalue en triggers)
+  //              → dimensionne les PROCESSUS INTERNES (preprocessors, DBsyncers, caches)
+  //
+  // Quand proxy actif : le backend ne collecte plus (ou très peu),
+  // mais il ingère quand même TOUT le flux. Les collecteurs tombent à un minimum
+  // de sécurité (scripts globaux, remote commands, checks internes zabbix[*]).
+
+  // ── COLLECTEURS (basés sur nvpsDirect / hostsBackend) ──
+  const startPollers    = T.proxy
+    ? 2   // minimum : scripts globaux, remote commands, simple checks internes
+    : Math.max(5, Math.min(200, Math.ceil(hostsBackend*0.2)));
+
+  const startAgentAsync = T.proxy
+    ? 1   // minimum : checks zabbix[*] internes sur le backend lui-même
+    : Math.max(1, Math.min(50, Math.ceil(hostsBackend/500+1)));
+
+  const startHTTPAsync  = T.proxy
+    ? 0
+    : (T.http ? Math.max(1, Math.ceil(hostsBackend/1000+1)) : 0);
+
+  const startSNMP       = T.proxy
+    ? 0
+    : (T.snmp ? Math.max(1, Math.min(50, Math.ceil(hostsBackend/300+1))) : 0);
+
+  const startPingers    = T.proxy
+    ? 1   // minimum : fping utilisé pour checks réseau internes
+    : (T.icmp ? Math.max(1, Math.min(50, Math.ceil(hostsBackend/100*2))) : 0);
+
+  const startHTTP       = T.proxy
+    ? 0
+    : (T.http ? Math.max(1, Math.min(50, Math.ceil(hostsBackend/300+1))) : 0);
+
+  const startIPMI       = T.proxy
+    ? 0
+    : (T.ipmi ? Math.max(2, Math.ceil(hostsBackend/200)) : 0);
+
+  const startJava       = T.proxy
+    ? 0
+    : (T.jmx ? Math.max(2, Math.ceil(hostsBackend/200)) : 0);
+
+  // PollersUnreachable : minimum si des pollers tournent, sinon 0
+  const startUnreach    = T.proxy
+    ? 2   // minimum requis si StartPollers > 0
+    : Math.max(2, Math.min(50, Math.ceil(startPollers*0.3)));
+
+  // ── TRAPPERS (reçoivent les données : proxies actifs + agents actifs directs) ──
+  const trappersProxy   = T.proxy && proxyMode==='actif' ? nbProxy*2 : 0;
+  const trappersAgents  = T.proxy ? 3 : Math.max(5, Math.ceil(hostsBackend*0.05+3));
+  const startTrappers   = Math.max(5, Math.min(200, trappersProxy+trappersAgents));
+
+  // ── PROCESSUS INTERNES (basés sur nvpsTotal — tout ce que le backend ingère) ──
+  const startPreproc    = Math.max(cpu, Math.min(200, Math.ceil(nvpsTotal/50+cpu)));
+  const startDBSync     = Math.max(4,  Math.min(20,  4+Math.floor(Math.max(0,nvpsTotal-1000)/1000)));
+  const startHistPoll   = Math.max(5,  Math.min(50,  Math.ceil(hostsTotal/1000+2)));
+  const startLLD        = Math.max(2,  Math.min(20,  Math.ceil(hostsTotal/2000+2)));
+  const startEscal      = Math.max(1,  Math.min(10,  Math.ceil(hostsTotal/2000+1)));
+  const startAlerters   = Math.max(3,  Math.min(20,  Math.ceil(hostsTotal/1000+2)));
+  // Discoverers : utile uniquement si le backend fait de la découverte réseau directe
+  const startDiscov     = T.proxy
+    ? 2   // minimum : discovery gérée par les proxies
+    : Math.max(5, Math.min(20, Math.ceil(hostsBackend/500+1)));
+
+  // ── PROXY POLLERS (passif uniquement) ──
+  const startProxyPoll  = T.proxy && proxyMode==='passif' ? Math.max(1, nbProxy*2) : 1;
+
+  const startVMware     = T.vmware ? Math.max(2, Math.min(vmwC*2, 20)) : 0;
+  const timeout         = nvpsTotal>3000 ? 5 : 3;
+  const hhFreq          = 1;
+  const maxHKDel        = 5000;
+  const logSlowQ        = 3000;
+
+  // DISK
+  const diskH=((histD*86400*nvpsTotal*90)/1e9).toFixed(1);
+  const diskT=((trendD*24*totalItemsAll*90)/1e9).toFixed(1);
+  document.getElementById('d-dh').innerHTML=diskH+'<span class="sbox-u"> GB</span>';
+  document.getElementById('d-dt').innerHTML=diskT+'<span class="sbox-u"> GB</span>';
+
+  // BARS
+  setBar('h-c','hp-c',Math.min(90,Math.round(cacheMB/(ram*1024*0.1)*40)));
+  setBar('h-h','hp-h',Math.min(90,Math.round(nvpsTotal/50)));
+  setBar('h-v','hp-v',Math.min(90,Math.round(nvpsTotal/80)));
+  setBar('h-d','hp-d',Math.min(90,Math.round((nvpsTotal/(startDBSync*600))*100)));
+  setBar('h-r','hp-r',ramPct);
+
+  // ALERTS
+  const al=[];
+  if(T.proxy){
+    const pct = Math.min(100, Math.round((hostsOnProxy/hostsTotal)*100));
+    const hostsOnProxyDisplay = Math.min(hostsOnProxy, hostsTotal).toLocaleString('fr');
+    al.push({t:'a-proxy',i:'⚡',m:`${hostsOnProxyDisplay} hosts sur proxy (${pct}% du total). Backend : collecte directe = ${nvpsDirect}/s — ingestion BDD = ${nvpsTotal.toLocaleString('fr')}/s (le proxy collecte et envoie, le backend écrit en BDD + évalue les triggers).`});
+    if(proxyMode==='actif') al.push({t:'a-proxy',i:'→',m:`Proxy actif : StartTrappers=${startTrappers} (${nbProxy}×2 + buffer). Les proxies poussent les données via les trappers.`});
+    else al.push({t:'a-proxy',i:'→',m:`Proxy passif : StartProxyPollers=${startProxyPoll} (${nbProxy} proxies × 2 pollers). Le serveur tire les données.`});
+  }
+  if(ramPct>80)        al.push({t:'a-crit',i:'⚠',m:'RAM insuffisante pour les caches. Augmenter la RAM ou réduire les rétentions.'});
+  else if(ramPct>60)   al.push({t:'a-warn',i:'△',m:'Allocation RAM caches > 60%. Surveiller la pression mémoire.'});
+  if(nvpsTotal>4000&&startDBSync<6) al.push({t:'a-warn',i:'△',m:`NVPS ingéré élevé (${nvpsTotal}/s). Envisager StartDBSyncers ≥ 6 si write queue sature.`});
+  if(nvpsTotal>5000)   al.push({t:'a-crit',i:'⚠',m:'Charge très élevée. Partitionnement BDD requis.'});
+  if(startPreproc<cpu) al.push({t:'a-crit',i:'⚠',m:`StartPreprocessors (${startPreproc}) < CPU cores (${cpu}). Doit être ≥ cores.`});
+  if(!T.proxy&&hostsTotal>2000) al.push({t:'a-info',i:'ℹ',m:'> 2000 hosts sans proxy. Bonne pratique : déporter la collecte sur des proxies.'});
+  if(parseFloat(diskH)>500) al.push({t:'a-warn',i:'△',m:`Disque historique ~${diskH} GB. Envisager partitionnement.`});
+  if(currentDB==='timescale') al.push({t:'a-info',i:'i',m:'TimescaleDB : Housekeeper actif (HousekeepingFrequency=1). Il gere la suppression des partitions et la compression. Activer Override item history/trend period dans Administration > Housekeeping.'});
+  if(al.length===0) al.push({t:'a-ok',i:'✓',m:'Configuration cohérente. Surveiller les métriques zabbix[*] après déploiement.'});
+  document.getElementById('alerts').innerHTML=al.map(a=>`<div class="alert ${a.t}"><span class="ai">${a.i}</span><span>${a.m}</span></div>`).join('');
+
+  generateConfig({
+    cacheMB,histCachMB,histIdxMB,trendMB,tfcMB,valueMB,
+    startPollers,startTrappers,startUnreach,startPreproc,startDBSync,
+    startPingers,startHTTP,startIPMI,startJava,startSNMP,
+    startAgentAsync,startHTTPAsync,startProxyPoll,startVMware,
+    startEscal,startAlerters,startDiscov,startLLD,startHistPoll,
+    timeout,hhFreq,maxHKDel,logSlowQ,
+    vmwC,hostsTotal,hostsBackend,hostsOnProxy,nvpsTotal,nvpsDirect,nvpsFromProxy,
+    nbProxy,hostsProxy,nvpsPerProxy,cpu,ram,histD,trendD,haNode,nodeAddr
+  });
+}
+
+function updateArch(hostsB,hostsT,nvpsD,nvpsT,nvpsP,nvpsPrx,nb,hPrx){
+  const grid=document.getElementById('arch-grid');
+  function tier(n){return n<500?'Faible':n<2000?'Moyen':n<5000?'Élevé':'Intensif';}
+  if(!T.proxy){
+    grid.className='arch-grid no-proxy';
+    grid.innerHTML=`<div class="anode node-b">
+      <div class="anode-lbl">🖥 Backend (serveur central)</div>
+      <div class="anode-nvps">${nvpsD.toLocaleString('fr')}<span class="anode-unit"> NVPS collecte</span></div>
+      <div class="anode-sub"><strong>${hostsB.toLocaleString('fr')}</strong> hosts — collecte directe — <strong>${tier(nvpsD)}</strong></div>
+    </div>`;
+  } else {
+    const show=Math.min(nb,4);
+    grid.className='arch-grid with-proxy';
+    grid.style.setProperty('--pc',show);
+    let px='';
+    for(let i=0;i<show;i++){
+      const lbl=nb>4&&i===show-1?`×${nb} proxies`:`Proxy ${i+1}`;
+      px+=`<div class="anode node-p">
+        <div class="anode-lbl">⚡ ${lbl}</div>
+        <div class="anode-nvps">${nvpsPrx.toLocaleString('fr')}<span class="anode-unit"> NVPS collecte</span></div>
+        <div class="anode-sub"><strong>${hPrx.toLocaleString('fr')}</strong> hosts — ${proxyMode} — ${tier(nvpsPrx)}</div>
+      </div>`;
+    }
+    // Backend avec proxy : distinguer clairement collecte directe vs ingestion totale
+    const backendLabel = nvpsD === 0
+      ? `<span style="color:var(--text3);font-size:10px">collecte directe : 0/s</span><br>ingestion BDD : <strong>${nvpsP.toLocaleString('fr')}/s</strong> (depuis proxies)`
+      : `collecte : <strong>${nvpsD.toLocaleString('fr')}/s</strong> + proxies : <strong>${nvpsP.toLocaleString('fr')}/s</strong>`;
+    grid.innerHTML=`<div class="anode node-b">
+      <div class="anode-lbl">🖥 Backend — ingestion BDD</div>
+      <div class="anode-nvps">${nvpsT.toLocaleString('fr')}<span class="anode-unit"> NVPS ingérés</span></div>
+      <div class="anode-sub">${backendLabel} — charge BDD : <strong>${tier(nvpsT)}</strong></div>
+    </div><div class="arch-arr">→</div>${px}`;
+  }
+}
+
+// ── CONFIG GENERATOR ──
+// Reproduces exactly the real zabbix_server.conf format:
+// - commented-out defaults stay as: # Key=value  (in dark grey)
+// - modified values are uncommented and orange
+// - unchanged uncommented values are green
+function line(key, val, def, comment){
+  const modified = String(val) !== String(def);
+  if(modified){
+    const c = comment ? `  <span class="co"># ${comment}</span>` : '';
+    return `<span class="ck">${key}</span>=<span class="cm">${val}</span>${c}`;
+  } else {
+    const c = comment ? `  <span class="co"># ${comment}</span>` : '';
+    return `<span class="ck">${key}</span>=<span class="cv">${val}</span>${c}`;
+  }
+}
+// Default (commented) line
+function dfl(key, val, comment){
+  const c = comment ? ` # ${comment}` : '';
+  return `<span class="cd"># ${key}=${val}${c}</span>`;
+}
+// Comment line
+function co(t){return `<span class="co"># ${t}</span>`;}
+// Section header
+function sec(t){return `<span class="cs">############ ${t} ############</span>`;}
+// Option header block
+function opt(name, desc, mandatory, range, def){
+  let lines=[];
+  lines.push(`<span class="co">### Option: ${name}</span>`);
+  if(desc) desc.split('\n').forEach(d=>lines.push(`<span class="co">#       ${d}</span>`));
+  lines.push(`<span class="co">#</span>`);
+  if(mandatory) lines.push(`<span class="co"># Mandatory: ${mandatory}</span>`);
+  if(range)     lines.push(`<span class="co"># Range: ${range}</span>`);
+  lines.push(`<span class="co"># Default:</span>`);
+  if(def !== undefined) lines.push(dfl(name, def));
+  return lines.join('\n');
+}
+const B='';
+
+function generateConfig(p){
+  const now=new Date().toLocaleString('fr-FR');
+  const proxyNote=T.proxy?` — ${p.nbProxy} proxies ${proxyMode}s (${p.hostsOnProxy.toLocaleString('fr')} hosts)`:'';
+  const dbLabel=currentDB==='mysql'?'MySQL':currentDB==='pgsql'?'PostgreSQL':'PostgreSQL+TimescaleDB';
+
+  const L=[
+    co('# This is a configuration file for Zabbix server daemon'),
+    co('# To get more information about Zabbix, visit https://www.zabbix.com'),
+    B,
+    `<span class="cb">############ GENERATED BY ZabbixTune ############</span>`,
+    co(`Profil  : ${Math.round(p.hostsTotal)} hosts total${proxyNote}`),
+    co(`Backend : ~${p.nvpsTotal.toLocaleString('fr')} NVPS ingérés (${p.nvpsDirect}/s direct + ${p.nvpsFromProxy}/s proxies)`),
+    co(`DB      : ${dbLabel}`),
+    co(`Généré  : ${now}`),
+    
+    co(`Valeurs en orange = modifiées par rapport aux défauts.`),
+    co(`Valider avec : zabbix_server -T`),
+    `<span class="cb">##################################################</span>`,
+    B,
+    sec('GENERAL PARAMETERS'),
+    B,
+    opt('ListenPort','Listen port for trapper.','no','1024-32767','10051'),
+    B,
+    opt('SourceIP','Source IP address for outgoing connections.','no',null,''),
+    B,
+    opt('LogType','Specifies where log messages are written to:\n        system  - syslog\n        file    - file specified with LogFile parameter\n        console - standard output','no',null,'file'),
+    B,
+    opt('LogFile','Log file name for LogType \'file\' parameter.','yes, if LogType is set to file, otherwise no',null,''),
+    B,
+    line('LogFile','/var/log/zabbix/zabbix_server.log','/var/log/zabbix/zabbix_server.log'),
+    B,
+    opt('LogFileSize','Maximum size of log file in MB.\n0 - disable automatic log rotation.','no','0-1024','1'),
+    B,
+    line('LogFileSize','0','1'),
+    B,
+    opt('DebugLevel','Specifies debug level:\n0 - basic information about starting and stopping\n1 - critical information\n2 - error information\n3 - warnings\n4 - for debugging (lots of information)\n5 - extended debugging','no','0-5','3'),
+    B,
+    line('DebugLevel','3','3'),
+    B,
+    opt('PidFile','Name of PID file.','no',null,'/tmp/zabbix_server.pid'),
+    B,
+    line('PidFile','/run/zabbix/zabbix_server.pid','/run/zabbix/zabbix_server.pid'),
+    B,
+    opt('SocketDir','IPC socket directory.\n        Directory to store IPC sockets used by internal Zabbix services.','no',null,'/tmp'),
+    B,
+    line('SocketDir','/run/zabbix','/run/zabbix'),
+    B,
+    opt('DBHost','Database host name.\nIf set to localhost, socket is used for MySQL.\nIf set to empty string, socket is used for PostgreSQL.','no',null,'localhost'),
+    B,
+    line('DBHost','localhost','localhost'),
+    B,
+    opt('DBName','Database name.','yes',null,''),
+    B,
+    line('DBName','zabbix','zabbix'),
+    B,
+    opt('DBSchema','Schema name. Used for PostgreSQL.','no',null,''),
+    B,
+    ...(currentDB!=='mysql'
+      ? [line('DBSchema','zabbix','')]
+      : [dfl('DBSchema','')]),
+    B,
+    opt('DBUser','Database user.','no',null,''),
+    B,
+    line('DBUser','zabbix','zabbix'),
+    B,
+    opt('DBPassword','Database password.\nComment this line if no password is used.','no',null,''),
+    B,
+    line('DBPassword','<strong_password>',''),
+    B,
+    opt('DBSocket','Path to MySQL socket.','no',null,''),
+    ...(currentDB==='mysql'?[B,dfl('DBSocket','/var/lib/mysql/mysql.sock')]:[B,dfl('DBSocket','','MySQL only')]),
+    B,
+    opt('DBPort','Database port when not using local socket.','no','1024-65535',''),
+    B,
+    dfl('DBPort',currentDB==='mysql'?'3306':'5432'),
+    B,
+    sec('ADVANCED PARAMETERS'),
+    B,
+    opt('StartPollers','Number of pre-forked instances of pollers.','no','0-1000','5'),
+    B,
+    ...(T.proxy
+      ? [co('# Proxy mode : minimum de sécurité (scripts globaux, remote commands, checks internes)'),
+         line('StartPollers',p.startPollers,5,'minimum — scripts globaux + remote commands')]
+      : [line('StartPollers',p.startPollers,5)] ),
+    B,
+    opt('StartAgentPollers','Number of pre-forked instances of asynchronous Zabbix agent pollers. Also see MaxConcurrentChecksPerPoller.','no','0-1000','1'),
+    B,
+    ...(T.proxy
+      ? [co('# Proxy mode : minimum pour checks zabbix[*] internes sur le backend'),
+         line('StartAgentPollers',p.startAgentAsync,1,'minimum — checks internes backend')]
+      : [line('StartAgentPollers',p.startAgentAsync,1)]),
+    B,
+    opt('StartHTTPAgentPollers','Number of pre-forked instances of asynchronous HTTP agent pollers. Also see MaxConcurrentChecksPerPoller.','no','0-1000','1'),
+    B,
+    ...(T.proxy
+      ? [line('StartHTTPAgentPollers',0,1,'proxy mode — désactivé')]
+      : [line('StartHTTPAgentPollers',p.startHTTPAsync,1,p.startHTTPAsync===0?'HTTP désactivé':'')]),
+    B,
+    opt('StartSNMPPollers','Number of pre-forked instances of asynchronous SNMP pollers. Also see MaxConcurrentChecksPerPoller.','no','0-1000','1'),
+    B,
+    ...(T.proxy
+      ? [line('StartSNMPPollers',0,1,'proxy mode — désactivé')]
+      : [line('StartSNMPPollers',p.startSNMP,1,p.startSNMP===0?'SNMP async désactivé':'')]),
+    B,
+    opt('MaxConcurrentChecksPerPoller','Maximum number of asynchronous checks that can be executed at once by each HTTP agent poller or agent poller.','no','1-1000','1000'),
+    B,
+    dfl('MaxConcurrentChecksPerPoller','1000'),
+    B,
+    opt('StartIPMIPollers','Number of pre-forked instances of IPMI pollers.\n        The IPMI manager process is automatically started when at least one IPMI poller is started.','no','0-1000','0'),
+    B,
+    line('StartIPMIPollers',p.startIPMI,0,p.startIPMI===0?(T.proxy?'proxy mode — désactivé':'désactivé'):''),
+    B,
+    opt('StartPreprocessors','Number of pre-started instances of preprocessing worker threads should be set to no less than\nthe available CPU core count.','no','1-1000','16'),
+    B,
+    co(`# Basé sur NVPS total ingéré (~${p.nvpsTotal}/s) : collecte directe + données reçues des proxies`),
+    line('StartPreprocessors',p.startPreproc,16,`≥ ${Math.round(p.cpu)} CPU cores`),
+    B,
+    opt('StartConnectors','Number of pre-forked instances of connector workers.','no','0-1000','0'),
+    B,
+    dfl('StartConnectors','0'),
+    B,
+    opt('StartPollersUnreachable','Number of pre-forked instances of pollers for unreachable hosts (including IPMI and Java).\nAt least one poller for unreachable hosts must be running if regular, IPMI or Java pollers are started.','no','0-1000','1'),
+    B,
+    ...(T.proxy
+      ? [co('# Proxy mode : minimum requis car StartPollers > 0'),
+         line('StartPollersUnreachable',p.startUnreach,1,'minimum — requis si StartPollers > 0')]
+      : [line('StartPollersUnreachable',p.startUnreach,1)]),
+    B,
+    opt('StartHistoryPollers','Number of pre-forked instances of history pollers.\nOnly required for calculated checks.','no','0-1000','5'),
+    B,
+    co('# Items calculés restent évalués sur le backend (même avec proxies)'),
+    line('StartHistoryPollers',p.startHistPoll,5),
+    B,
+    opt('StartTrappers','Number of pre-forked instances of trappers.\nTrappers accept incoming connections from Zabbix sender, active agents and active proxies.','no','0-1000','5'),
+    B,
+    ...(T.proxy&&proxyMode==='actif'
+      ? [co(`# Proxy actif : ${p.nbProxy} proxies × 2 trappeurs simultanés = ${p.nbProxy*2} (données + config)`),
+         line('StartTrappers',p.startTrappers,5,`${p.nbProxy} proxies actifs × 2`)]
+      : [line('StartTrappers',p.startTrappers,5)]),
+    B,
+    opt('StartPingers','Number of pre-forked instances of ICMP pingers.','no','0-1000','1'),
+    B,
+    ...(T.proxy
+      ? [co('# Proxy mode : minimum — fping requis pour checks réseau internes backend'),
+         line('StartPingers',p.startPingers,1,'minimum — checks internes')]
+      : [line('StartPingers',p.startPingers,1,p.startPingers===0?'désactivé':'')]),
+    B,
+    opt('StartDiscoverers','Number of pre-started instances of discovery workers.','no','0-1000','5'),
+    B,
+    ...(T.proxy
+      ? [co('# Proxy mode : discovery réseau déléguée aux proxies — réduit sur backend'),
+         line('StartDiscoverers',p.startDiscov,5,'réduit — discovery sur proxies')]
+      : [line('StartDiscoverers',p.startDiscov,5)]),
+    B,
+    opt('StartHTTPPollers','Number of pre-forked instances of HTTP pollers.','no','0-1000','1'),
+    B,
+    ...(T.proxy
+      ? [co('# Proxy mode : HTTP checks gérés par les proxies — désactivé sur le backend'),
+         line('StartHTTPPollers',0,1,'proxy mode — désactivé')]
+      : [line('StartHTTPPollers',p.startHTTP,1,p.startHTTP===0?'désactivé':'')]),
+    B,
+    opt('StartTimers','Number of pre-forked instances of timers.\nTimers process maintenance periods.','no','1-1000','1'),
+    B,
+    dfl('StartTimers','1'),
+    B,
+    opt('StartEscalators','Number of pre-forked instances of escalators.','no','1-100','1'),
+    B,
+    line('StartEscalators',p.startEscal,1),
+    B,
+    opt('StartAlerters','Number of pre-forked instances of alerters.\nAlerters send the notifications created by action operations.','no','1-100','3'),
+    B,
+    line('StartAlerters',p.startAlerters,3),
+    B,
+    opt('JavaGateway','IP address (or hostname) of Zabbix Java gateway.\nOnly required if Java pollers are started.','no',null,''),
+    B,
+    ...(p.startJava>0?[line('JavaGateway','127.0.0.1','')]:[dfl('JavaGateway','')]),
+    B,
+    opt('JavaGatewayPort','Port that Zabbix Java gateway listens on.','no','1024-32767','10052'),
+    B,
+    ...(p.startJava>0?[line('JavaGatewayPort','10052','10052')]:[dfl('JavaGatewayPort','10052')]),
+    B,
+    opt('StartJavaPollers','Number of pre-forked instances of Java pollers.','no','0-1000','0'),
+    B,
+    ...(T.proxy
+      ? [line('StartJavaPollers',0,0,'proxy mode — désactivé')]
+      : [line('StartJavaPollers',p.startJava,0,p.startJava===0?'désactivé':'')]),
+    B,
+    opt('StartVMwareCollectors','Number of pre-forked vmware collector instances.','no','0-250','0'),
+    B,
+    line('StartVMwareCollectors',p.startVMware,0,p.startVMware===0?'désactivé':''),
+    B,
+    opt('VMwareFrequency','How often Zabbix will connect to VMware service to obtain a new data.','no','10-86400','60'),
+    B,
+    dfl('VMwareFrequency','60'),
+    B,
+    opt('VMwarePerfFrequency','How often Zabbix will connect to VMware service to obtain performance data.','no','10-86400','60'),
+    B,
+    dfl('VMwarePerfFrequency','60'),
+    B,
+    opt('VMwareCacheSize','Size of VMware cache, in bytes.\nShared memory size for storing VMware data.\nOnly used if VMware collectors are started.','no','256K-2G','8M'),
+    B,
+    ...(p.startVMware>0?[line('VMwareCacheSize','64M','8M')]:[dfl('VMwareCacheSize','8M','VMware désactivé')]),
+    B,
+    opt('VMwareTimeout','Specifies how many seconds vmware collector waits for response from VMware service.','no','1-300','10'),
+    B,
+    dfl('VMwareTimeout','10'),
+    B,
+    opt('SNMPTrapperFile','Temporary file used for passing data from SNMP trap daemon to the server.','no',null,'/tmp/zabbix_traps.tmp'),
+    B,
+    ...(T.snmptrapper
+      ? [line('SNMPTrapperFile','/var/log/snmptrap/snmptrap.log','/tmp/zabbix_traps.tmp')]
+      : [dfl('SNMPTrapperFile','/tmp/zabbix_traps.tmp')]),
+    B,
+    opt('StartSNMPTrapper','If 1, SNMP trapper process is started.','no','0-1','0'),
+    B,
+    line('StartSNMPTrapper',T.snmptrapper?1:0,0,T.snmptrapper?'activé':'désactivé'),
+    B,
+    opt('ListenIP','List of comma delimited IP addresses that the trapper should listen on.','no',null,'0.0.0.0'),
+    B,
+    dfl('ListenIP','0.0.0.0'),
+    B,
+    opt('HousekeepingFrequency','How often Zabbix will perform housekeeping procedure (in hours).\nWith HousekeepingFrequency=0 the housekeeper can be only executed using the runtime control option.','no','0-24','1'),
+    B,
+    line('HousekeepingFrequency',p.hhFreq,1),
+    B,
+    opt('MaxHousekeeperDelete','No more than \'MaxHousekeeperDelete\' rows will be deleted per one task in one housekeeping cycle.\nIf set to 0 then no limit is used at all.','no','0-1000000','5000'),
+    B,
+    dfl('MaxHousekeeperDelete','5000'),
+    B,
+    opt('CacheSize','Size of configuration cache, in bytes.\nShared memory size for storing host, item and trigger data.','no','128K-64G','32M'),
+    B,
+    co(`# Contient TOUTE la config — hosts + items même sur proxy (${Math.round(p.hostsTotal)} hosts total)`),
+    co(`# Monitor: zabbix[rcache,buffer,pfree] — cible > 40% libre`),
+    line('CacheSize',memStr(p.cacheMB),'32M'),
+    B,
+    opt('CacheUpdateFrequency','How often Zabbix will perform update of configuration cache, in seconds.','no','1-3600','10'),
+    B,
+    dfl('CacheUpdateFrequency','10'),
+    B,
+    opt('StartDBSyncers','Number of pre-forked instances of DB Syncers.','no','1-100','4'),
+    B,
+    co(`# Basé sur NVPS total ingéré : ~${p.nvpsTotal}/s. Default 4 ≈ 4000 NVPS. Augmenter avec prudence.`),
+    line('StartDBSyncers',p.startDBSync,4,p.nvpsTotal>4000?`NVPS élevé: ${p.nvpsTotal}/s`:''),
+    B,
+    opt('HistoryCacheSize','Size of history cache, in bytes.\nShared memory size for storing history data.','no','128K-2G','16M'),
+    B,
+    co(`# Write buffer avant flush BDD — basé sur ~${p.nvpsTotal}/s`),
+    co(`# Monitor: zabbix[wcache,history,pfree] — cible > 50% libre`),
+    line('HistoryCacheSize',memStr(p.histCachMB),'16M'),
+    B,
+    opt('HistoryIndexCacheSize','Size of history index cache, in bytes.\nShared memory size for indexing history cache.','no','128K-2G','4M'),
+    B,
+    line('HistoryIndexCacheSize',memStr(p.histIdxMB),'4M'),
+    B,
+    opt('TrendCacheSize','Size of trend write cache, in bytes.\nShared memory size for storing trends data.','no','128K-2G','4M'),
+    B,
+    line('TrendCacheSize',memStr(p.trendMB),'4M'),
+    B,
+    opt('TrendFunctionCacheSize','Size of trend function cache, in bytes.\nShared memory size for caching calculated trend function data.','no','128K-2G','4M'),
+    B,
+    line('TrendFunctionCacheSize',memStr(p.tfcMB),'4M'),
+    B,
+    opt('ValueCacheSize','Size of history value cache, in bytes.\nShared memory size for caching item history data requests.\nSetting to 0 disables value cache.','no','0,128K-64G','8M'),
+    B,
+    co('# CRITIQUE : si plein → low memory mode → requêtes SQL directes → dégradation sévère'),
+    co('# Monitor: zabbix[vcache,cache,mode]  (0=normal  1=LOW MEMORY CRITIQUE)'),
+    co('# Monitor: zabbix[vcache,buffer,pfree]'),
+    line('ValueCacheSize',memStr(p.valueMB),'8M'),
+    B,
+    opt('Timeout','Specifies how long to wait (in seconds) for establishing connection and exchanging data.','no','1-30','3'),
+    B,
+    line('Timeout',p.timeout,3),
+    B,
+    opt('TrapperTimeout','Specifies timeout in seconds for retrieval of historical data from Zabbix proxy.','no','1-300','300'),
+    B,
+    dfl('TrapperTimeout','300'),
+    B,
+    opt('UnreachablePeriod','After how many seconds of unreachability treat a host as unavailable.','no','1-3600','45'),
+    B,
+    dfl('UnreachablePeriod','45'),
+    B,
+    opt('UnavailableDelay','How often host is checked for availability during the unavailability period, in seconds.','no','1-3600','60'),
+    B,
+    dfl('UnavailableDelay','60'),
+    B,
+    opt('UnreachableDelay','How often host is checked for availability during the unreachability period, in seconds.','no','1-3600','15'),
+    B,
+    dfl('UnreachableDelay','15'),
+    B,
+    opt('AlertScriptsPath','Full path to location of custom alert scripts.','no',null,''),
+    B,
+    dfl('AlertScriptsPath','/usr/lib/zabbix/alertscripts'),
+    B,
+    opt('ExternalScripts','Full path to location of external scripts.','no',null,''),
+    B,
+    dfl('ExternalScripts','/usr/lib/zabbix/externalscripts'),
+    B,
+    opt('FpingLocation','Location of fping.\nMake sure that fping binary has root ownership and SUID flag set.','no',null,''),
+    B,
+    dfl('FpingLocation','/usr/sbin/fping'),
+    B,
+    opt('Fping6Location','Location of fping6.\nMake empty if your fping utility is capable to process IPv6 addresses.','no',null,''),
+    B,
+    dfl('Fping6Location','/usr/sbin/fping6'),
+    B,
+    opt('SSHKeyLocation','Location of public and private keys for SSH checks and actions.','no',null,''),
+    B,
+    dfl('SSHKeyLocation',''),
+    B,
+    opt('LogSlowQueries','How long a database query may take before being logged (in milliseconds).\nOnly works if DebugLevel set to 3, 4 or 5.\n0 - don\'t log slow queries.','no','1-3600000','0'),
+    B,
+    line('LogSlowQueries',p.logSlowQ,0),
+    B,
+    opt('TmpDir','Temporary directory.','no',null,'/tmp'),
+    B,
+    dfl('TmpDir','/tmp'),
+    B,
+    opt('StartProxyPollers','Number of pre-forked instances of pollers for passive proxies.','no','0-250','1'),
+    B,
+    ...(T.proxy&&proxyMode==='passif'
+      ? [co(`# Proxy passif : ${p.nbProxy} proxies × 2 pollers (données + config)`),
+         line('StartProxyPollers',p.startProxyPoll,1)]
+      : [dfl('StartProxyPollers','1',T.proxy&&proxyMode==='actif'?'proxies actifs — inutile ici':'')]),
+    B,
+    opt('ProxyConfigFrequency','How often Zabbix Server sends configuration data to a Zabbix Proxy in seconds.\nThis parameter is used only for proxies in the passive mode.','no','1-3600*24*7','10'),
+    B,
+    dfl('ProxyConfigFrequency','10'),
+    B,
+    opt('ProxyDataFrequency','How often Zabbix Server requests history data from a Zabbix Proxy in seconds.\nThis parameter is used only for proxies in the passive mode.','no','1-3600','1'),
+    B,
+    dfl('ProxyDataFrequency','1'),
+    B,
+    opt('StartLLDProcessors','Number of pre-forked instances of low level discovery processors.','no','1-100','2'),
+    B,
+    line('StartLLDProcessors',p.startLLD,2),
+    B,
+    opt('AllowRoot','Allow the server to run as \'root\'.','no',null,'0'),
+    B,
+    dfl('AllowRoot','0'),
+    B,
+    opt('User','Drop privileges to a specific, existing user on the system.','no',null,'zabbix'),
+    B,
+    dfl('User','zabbix'),
+    B,
+    co('### Option: Include'),
+    co('#       You may include individual files or all files in a directory.'),
+    co('#'),
+    co('# Mandatory: no'),
+    co('# Default:'),
+    dfl('Include',''),
+    B,
+    line('Include','/etc/zabbix/zabbix_server.d/*.conf','/etc/zabbix/zabbix_server.d/*.conf'),
+    B,
+    opt('StatsAllowedIP','List of comma delimited IP addresses of external Zabbix instances.\nStats request will be accepted only from the addresses listed here.','no',null,''),
+    B,
+    line('StatsAllowedIP','127.0.0.1',''),
+    B,
+    sec('HIGH AVAILABILITY CLUSTER PARAMETERS'),
+    B,
+    co('## Option: HANodeName'),
+    co('#       The high availability cluster node name.'),
+    co('#       When empty, server is working in standalone mode.'),
+    co('#'),
+    co('# Mandatory: no'),
+    co('# Default:'),
+    B,
+    ...(p.haNode
+      ? [line('HANodeName',p.haNode,'',`nœud HA`)]
+      : [dfl('HANodeName','','standalone si vide')]),
+    B,
+    co('## Option: NodeAddress'),
+    co('#       IP or hostname with optional port to specify how frontend should connect to the server.'),
+    co('#       Format: <address>[:<port>]'),
+    co('#'),
+    co('# Mandatory: no'),
+    co('# Default:'),
+    B,
+    ...(p.nodeAddr
+      ? [line('NodeAddress',p.nodeAddr,'')]
+      : [dfl('NodeAddress','<ip>:10051','nécessaire si HANodeName défini')]),
+    B,
+    sec('LOADABLE MODULES'),
+    B,
+    opt('LoadModulePath','Full path to location of server modules.','no',null,''),
+    B,
+    dfl('LoadModulePath','${libdir}/modules'),
+    B,
+    opt('LoadModule','Module to load at server startup.','no',null,''),
+    B,
+    dfl('LoadModule',''),
+    B,
+    sec('TLS-RELATED PARAMETERS'),
+    B,
+    dfl('TLSCAFile',''),
+    dfl('TLSCRLFile',''),
+    dfl('TLSCertFile',''),
+    dfl('TLSKeyFile',''),
+    dfl('TLSCipherCert13',''),
+    dfl('TLSCipherCert',''),
+    dfl('TLSCipherPSK13',''),
+    dfl('TLSCipherPSK',''),
+    dfl('TLSCipherAll13',''),
+    dfl('TLSCipherAll',''),
+    dfl('DBTLSConnect',''),
+    dfl('DBTLSCAFile',''),
+    dfl('DBTLSCertFile',''),
+    dfl('DBTLSKeyFile',''),
+    B,
+    sec('BROWSER MONITORING'),
+    B,
+    opt('StartBrowserPollers','Number of pre-forked instances of browser item pollers.','no','0-1000','1'),
+    B,
+    dfl('StartBrowserPollers','1'),
+    B,
+    `<span class="cb">############ MONITORING METRICS — reference ############</span>`,
+    co('zabbix[wcache,history,pfree]      → % libre HistoryCacheSize'),
+    co('zabbix[wcache,trend,pfree]        → % libre TrendCacheSize'),
+    co('zabbix[rcache,buffer,pfree]       → % libre CacheSize'),
+    co('zabbix[vcache,buffer,pfree]       → % libre ValueCacheSize'),
+    co('zabbix[vcache,cache,mode]         → 0=normal  1=LOW MEMORY CRITIQUE'),
+    co('zabbix[process,<type>,avg,busy]   → % busy par type de processus'),
+    co('zabbix[vps,written]               → NVPS réels écrits en BDD'),
+    co('zabbix[stats,127.0.0.1,10051]     → stats complètes serveur'),
+    co(`RAM caches : ${memStr(p.cacheMB+p.histCachMB+p.histIdxMB+p.trendMB+p.tfcMB+p.valueMB)} / ${Math.round(p.ram)} GB`),
+    ...(T.proxy?[co(`Proxies : ${p.nbProxy} × ${proxyMode} — NVPS/proxy : ~${p.nvpsPerProxy}/s — hosts/proxy : ${p.hostsProxy}`)]:[]),
+  ];
+  document.getElementById('cfg-out').innerHTML=L.join('\n');
+  _lastParams = p;
+}
+
+function getConfigText(){
+  // Normaliser en LF Unix — évite le ^M sur AlmaLinux/RHEL
+  return document.getElementById('cfg-out').innerText
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
+}
+
+function copyConfig(){
+  const text = getConfigText();
+  const btn  = document.getElementById('btn-copy');
+
+  // Method 1 — modern clipboard API (works on HTTPS)
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>{
+      btn.textContent='✓ Copié';
+      setTimeout(()=>btn.textContent='⎘ Copier',2500);
+    }).catch(()=> fallbackCopy(text, btn));
+    return;
+  }
+  fallbackCopy(text, btn);
+}
+
+function fallbackCopy(text, btn){
+  // Method 2 — textarea + execCommand (works in iframes without HTTPS)
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    const ok = document.execCommand('copy');
+    btn.textContent = ok ? '✓ Copié' : '✗ Erreur';
+  } catch(e){
+    btn.textContent = '✗ Erreur';
+  }
+  document.body.removeChild(ta);
+  setTimeout(()=>btn.textContent='⎘ Copier', 2500);
+}
+
+function downloadConfig(){
+  const text = getConfigText().replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'zabbix_server.conf';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  const btn = document.getElementById('btn-dl');
+  btn.textContent = '✓ Téléchargé';
+  setTimeout(()=>btn.textContent='↓ Télécharger .conf', 2500);
+}
+
+// Stocke les paramètres calculés pour le diff
+let _lastParams = null;
+
+function downloadDiff(){
+  if(!_lastParams){ return; }
+  const p = _lastParams;
+
+  const defaults = {
+    LogFile:'', LogFileSize:1, DebugLevel:3,
+    PidFile:'/tmp/zabbix_server.pid', SocketDir:'/tmp',
+    DBHost:'localhost', DBName:'', DBUser:'', DBPassword:'',
+    StartPollers:5, StartAgentPollers:1, StartHTTPAgentPollers:1,
+    StartSNMPPollers:1, StartIPMIPollers:0, StartPreprocessors:16,
+    StartPollersUnreachable:1, StartHistoryPollers:5, StartTrappers:5,
+    StartPingers:1, StartDiscoverers:5, StartHTTPPollers:1,
+    StartTimers:1, StartEscalators:1, StartAlerters:3,
+    StartJavaPollers:0, StartVMwareCollectors:0,
+    StartDBSyncers:4, StartLLDProcessors:2,
+    StartProxyPollers:1, StartSNMPTrapper:0,
+    CacheSize:'32M', HistoryCacheSize:'16M', HistoryIndexCacheSize:'4M',
+    TrendCacheSize:'4M', TrendFunctionCacheSize:'4M', ValueCacheSize:'8M',
+    HousekeepingFrequency:1, MaxHousekeeperDelete:5000,
+    Timeout:3, LogSlowQueries:0, VMwareCacheSize:'8M', StatsAllowedIP:'',
+  };
+
+  const computed = {
+    LogFile:'/var/log/zabbix/zabbix_server.log',
+    LogFileSize:0, DebugLevel:3,
+    PidFile:'/run/zabbix/zabbix_server.pid',
+    SocketDir:'/run/zabbix',
+    DBHost:'localhost', DBName:'zabbix', DBUser:'zabbix', DBPassword:'<strong_password>',
+    StartPollers:p.startPollers,
+    StartAgentPollers:p.startAgentAsync,
+    StartHTTPAgentPollers:T.proxy ? 0 : p.startHTTPAsync,
+    StartSNMPPollers:T.proxy ? 0 : p.startSNMP,
+    StartIPMIPollers:p.startIPMI,
+    StartPreprocessors:p.startPreproc,
+    StartPollersUnreachable:p.startUnreach,
+    StartHistoryPollers:p.startHistPoll,
+    StartTrappers:p.startTrappers,
+    StartPingers:p.startPingers,
+    StartDiscoverers:p.startDiscov,
+    StartHTTPPollers:T.proxy ? 0 : p.startHTTP,
+    StartTimers:1, StartEscalators:p.startEscal, StartAlerters:p.startAlerters,
+    StartJavaPollers:p.startJava, StartVMwareCollectors:p.startVMware,
+    StartDBSyncers:p.startDBSync, StartLLDProcessors:p.startLLD,
+    StartProxyPollers:p.startProxyPoll,
+    StartSNMPTrapper:T.snmptrapper ? 1 : 0,
+    CacheSize:memStr(p.cacheMB), HistoryCacheSize:memStr(p.histCachMB),
+    HistoryIndexCacheSize:memStr(p.histIdxMB), TrendCacheSize:memStr(p.trendMB),
+    TrendFunctionCacheSize:memStr(p.tfcMB), ValueCacheSize:memStr(p.valueMB),
+    HousekeepingFrequency:1, MaxHousekeeperDelete:5000,
+    Timeout:p.timeout, LogSlowQueries:p.logSlowQ,
+    VMwareCacheSize:p.startVMware > 0 ? '64M' : '8M',
+    StatsAllowedIP:'127.0.0.1',
+    ...(currentDB !== 'mysql' ? {DBSchema:'zabbix'} : {}),
+    ...(p.haNode  ? {HANodeName:p.haNode}   : {}),
+    ...(p.nodeAddr ? {NodeAddress:p.nodeAddr} : {}),
+  };
+
+  // Seulement les lignes qui diffèrent du défaut
+  const lines = [];
+  for(const [key, val] of Object.entries(computed)){
+    if(defaults[key] === undefined || String(val) !== String(defaults[key])){
+      lines.push(`${key}=${val}`);
+    }
+  }
+  const text = lines.join('\n') + '\n';
+
+  const btn = document.getElementById('btn-diff');
+
+  // Clipboard API (HTTPS)
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>{
+      btn.textContent='✓ Copié !';
+      setTimeout(()=>btn.textContent='⎘ Copier variables modifiées', 2500);
+    }).catch(()=>fallbackDiff(text, btn));
+    return;
+  }
+  fallbackDiff(text, btn);
+}
+
+function fallbackDiff(text, btn){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try {
+    document.execCommand('copy');
+    btn.textContent = '✓ Copié !';
+  } catch(e) {
+    btn.textContent = '✗ Erreur';
+  }
+  document.body.removeChild(ta);
+  setTimeout(()=>btn.textContent='⎘ Copier variables modifiées', 2500);
+}
+
+// ── PATCH SCRIPT ──
+// Stocke les paramètres modifiés à chaque generateConfig()
+
+const PROFILES={
+  lab:    {hosts:30,   items:50,  interval:60,cpu:2, ram:4,  hist:14, trend:90,  vmware:0},
+  small:  {hosts:150,  items:70,  interval:60,cpu:4, ram:8,  hist:30, trend:365, vmware:0},
+  medium: {hosts:500,  items:80,  interval:60,cpu:8, ram:16, hist:30, trend:365, vmware:0},
+  large:  {hosts:2000, items:100, interval:60,cpu:16,ram:64, hist:30, trend:730, vmware:2},
+  xlarge: {hosts:6000, items:120, interval:60,cpu:32,ram:128,hist:30, trend:1825,vmware:5},
+};
+
+function applyProfile(name){
+  const p=PROFILES[name];
+  ['hosts','items','interval','cpu','ram','hist','trend','vmware'].forEach(k=>{
+    document.getElementById('s-'+k).value=p[k];
+  });
+  if(name==='large'||name==='xlarge'){
+    T.proxy=true;
+    document.getElementById('t-proxy').classList.add('on');
+    document.getElementById('proxy-inputs').classList.add('visible');
+    document.getElementById('proxy-banner').classList.add('visible');
+    document.getElementById('s-nb-proxies').value =name==='large'?3:8;
+    document.getElementById('s-hosts-proxy').value=name==='large'?500:700;
+  }else{
+    T.proxy=false;
+    document.getElementById('t-proxy').classList.remove('on');
+    document.getElementById('proxy-inputs').classList.remove('visible');
+    document.getElementById('proxy-banner').classList.remove('visible');
+  }
+  document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('p-'+name).classList.add('active');
+  update();
+}
+
+update();
+</script>
+</body>
+</html>
