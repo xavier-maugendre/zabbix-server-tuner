@@ -12,7 +12,7 @@ Simulateur interactif de configuration `zabbix_server.conf` — génère une con
 
 ## 🚀 Demo
 
-👉 **[zabbixtune.vercel.app](https://zabbixtune.vercel.app)**
+👉 **[zabbixtune]([https://zabbixtune.vercel.app](https://xavier-maugendre.github.io/zabbix-server-tuner/))**
 
 ---
 
