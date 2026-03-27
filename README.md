@@ -5,7 +5,6 @@ Simulateur interactif de configuration `zabbix_server.conf` — génère une con
 ![HTML](https://img.shields.io/badge/HTML-single--file-orange?logo=html5&logoColor=white)
 ![Zabbix](https://img.shields.io/badge/Zabbix-7.0%20%2F%207.4-red?logo=zabbix&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Deploy](https://img.shields.io/badge/deploy-Vercel-black?logo=vercel&logoColor=white)
 ![No deps](https://img.shields.io/badge/dependencies-none-brightgreen)
 
 ---
