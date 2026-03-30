@@ -10,6 +10,9 @@ Simulateur interactif de configuration `zabbix_server.conf` — génère une con
 ---
 
 ## 🚀 Demo
+> 🇬🇧 English speakers: This tool generates an optimized 
+> zabbix_server.conf based on your infrastructure. 
+> [Try the live demo](https://xavier-maugendre.github.io/zabbix-server-tuner/)
 
 👉 **[zabbixtune](https://xavier-maugendre.github.io/zabbix-server-tuner/)**
 
